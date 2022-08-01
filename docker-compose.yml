@@ -1,0 +1,127 @@
+version: '3.9'
+
+volumes:
+  php-fpm-socket:
+  psysh-store:
+  db_volume:
+
+services:
+  php:
+    container_name: ${APP_NAME}_php
+    build:
+      context: .
+      dockerfile: ${DOCKER_SERVICES_PATH}/php/Dockerfile
+      args:
+        DOCKER_SERVICES_PATH: ${DOCKER_SERVICES_PATH}
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - type: volume
+        source: php-fpm-socket
+        target: /var/run/php-fpm
+        volume:
+          nocopy: true
+      - type: volume
+        source: psysh-store
+        target: /root/.config/psysh
+        volume:
+          nocopy: true
+      - type: bind
+        source: .
+        target: /var/www/
+
+  nginx:
+    container_name: ${APP_NAME}_nginx
+    build:
+      context: .
+      dockerfile: ${DOCKER_SERVICES_PATH}/nginx/Dockerfile
+      args:
+        DOCKER_SERVICES_PATH: ${DOCKER_SERVICES_PATH}
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - type: volume
+        source: php-fpm-socket
+        target: /var/run/php-fpm
+        volume:
+          nocopy: true
+      - type: bind
+        source: .
+        target: /var/www/
+    depends_on:
+      - php
+    ports:
+      - target: 80
+        published: ${APP_PORT}
+        protocol: tcp
+        mode: host
+
+  mysql:
+    container_name: ${APP_NAME}_mysql
+    build:
+      context: .
+      dockerfile: ${DOCKER_SERVICES_PATH}/mysql/Dockerfile
+      args:
+        DOCKER_SERVICES_PATH: ${DOCKER_SERVICES_PATH}
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - type: volume
+        source: db_volume
+        target: /var/lib/mysql
+        volume:
+          nocopy: true
+    environment:
+      - MYSQL_TCP_PORT=${DB_PORT}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - SERVICE_TAGS=dev
+      - SERVICE_NAME=mysql
+    ports:
+      - target: 3306
+        published: ${DB_PORT}
+        protocol: tcp
+        mode: host
+
+  phpmyadmin:
+    container_name: ${APP_NAME}_phpmyadmin
+    build:
+      context: .
+      dockerfile: ${DOCKER_SERVICES_PATH}/phpmyadmin/Dockerfile
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=${DB_PORT}
+      - PMA_PMADB=phpmyadmin
+      - PMA_USER=${DB_USERNAME}
+      - PMA_PASSWORD=${DB_PASSWORD}
+      - MYSQL_TCP_PORT=${DB_PORT}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    restart: always
+    depends_on:
+      - mysql
+    links:
+      - 'mysql:database'
+    ports:
+      - target: 80
+        published: ${PHPMYADMIN_PORT}
+        protocol: tcp
+        mode: host
+
+  mailhog:
+    container_name: ${APP_NAME}_mailhog
+    build:
+      context: .
+      dockerfile: ${DOCKER_SERVICES_PATH}/mailhog/Dockerfile
+    restart: unless-stopped
+    tty: true
+    ports:
+      - target: 1025
+        published: ${MAIL_PORT}
+        protocol: tcp
+        mode: host
+      - target: 8025
+        published: ${MAIL_DASHBOARD_PORT}
+        protocol: tcp
+        mode: host
