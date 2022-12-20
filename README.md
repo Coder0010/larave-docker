@@ -1,16 +1,16 @@
-# backend-docker
+# backend_docker
 
 ## Step One Clone Repo
 
-    git clone git@github.com:coder0010/backend-docker
+    git clone git@github.com:coder0010/backend_docker
 
 or you can download it by the desktop application of github
 
-    https://github.com/coder0010/backend-docker
+    https://github.com/coder0010/backend_docker
 
 Switch to the repo folder
 
-    cd backend-docker
+    cd backend_docker
 
 ---
 ## Step Two Prepare Project
