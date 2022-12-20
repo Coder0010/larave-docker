@@ -4,6 +4,7 @@ volumes:
   php-fpm-socket:
   psysh-store:
   db_volume:
+  redis_volume:
 
 services:
   php:
@@ -77,8 +78,8 @@ services:
       - MYSQL_DATABASE=${DB_DATABASE}
       - MYSQL_USER=${DB_USERNAME}
       - MYSQL_PASSWORD=${DB_PASSWORD}
-      - SERVICE_TAGS=dev
-      - SERVICE_NAME=mysql
+      # - SERVICE_TAGS=dev
+      # - SERVICE_NAME=mysql
     ports:
       - target: 3306
         published: ${DB_PORT}
@@ -98,6 +99,7 @@ services:
       - PMA_PASSWORD=${DB_PASSWORD}
       - MYSQL_TCP_PORT=${DB_PORT}
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - UPLOAD_LIMIT=2G
     restart: always
     depends_on:
       - mysql
@@ -109,19 +111,41 @@ services:
         protocol: tcp
         mode: host
 
-  mailhog:
-    container_name: ${APP_NAME}_mailhog
-    build:
-      context: .
-      dockerfile: ${DOCKER_SERVICES_PATH}/mailhog/Dockerfile
-    restart: unless-stopped
-    tty: true
-    ports:
-      - target: 1025
-        published: ${MAIL_PORT}
-        protocol: tcp
-        mode: host
-      - target: 8025
-        published: ${MAIL_DASHBOARD_PORT}
-        protocol: tcp
-        mode: host
+  # mailhog:
+  #   container_name: ${APP_NAME}_mailhog
+  #   build:
+  #     context: .
+  #     dockerfile: ${DOCKER_SERVICES_PATH}/mailhog/Dockerfile
+  #   restart: unless-stopped
+  #   tty: true
+  #   ports:
+  #     - target: 1025
+  #       published: ${MAIL_PORT}
+  #       protocol: tcp
+  #       mode: host
+  #     - target: 8025
+  #       published: ${MAIL_DASHBOARD_PORT}
+  #       protocol: tcp
+  #       mode: host
+
+  # redis:
+  #   container_name: ${APP_NAME}_redis
+  #   build:
+  #     context: .
+  #     dockerfile: ${DOCKER_SERVICES_PATH}/redis/Dockerfile
+  #     args:
+  #       DOCKER_SERVICES_PATH: ${DOCKER_SERVICES_PATH}
+  #   restart: unless-stopped
+  #   tty: true
+  #   command: redis-server --requirepass ${REDIS_PASSWORD}
+  #   volumes:
+  #     - type: volume
+  #       source: redis_volume
+  #       target: /data/redis
+  #       volume:
+  #         nocopy: true
+  #   ports:
+  #     - target: ${APP_PORT}
+  #       published: ${REDIS_PORT}
+  #       protocol: tcp
+  #       mode: host

@@ -32,7 +32,7 @@ php-bash:
 	docker-compose exec php bash
 nginx-bash:
 	clear
-	docker-compose exec nginx bash
+	docker-compose exec nginx sh
 mysql-bash:
 	clear
 	docker-compose exec mysql bash -c 'mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD'
