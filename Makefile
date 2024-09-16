@@ -1,24 +1,27 @@
+# Please make sure that you have all needed variables at .env.docker
 # docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)
-permissions:
-	sudo chmod -R 777 bootstrap/cache/ && sudo chmod -R 777 storage/ && [ -d "vendor/" ] && sudo chmod -R 777 vendor/
+destroy:
+	clear
+	docker-compose down --rmi all --volumes --remove-orphans
 build:
 	clear
 	docker-compose up -d --build
+rebuild-container:
+	clear
+	@make destroy
+	@make build
+
 up:
 	clear
 	docker-compose up -d
 down:
 	clear
 	docker-compose down --remove-orphans
-stop:
-	clear
-	docker-compose stop
+
 restart:
-	@make down
-	@make up
-destroy:
 	clear
-	docker-compose down --rmi all --volumes --remove-orphans
+	docker-compose down --remove-orphans
+	docker-compose up -d
 
 conf:
 	clear
@@ -32,13 +35,13 @@ php-bash:
 	docker-compose exec php bash
 nginx-bash:
 	clear
-	docker-compose exec nginx sh
+	docker-compose exec nginx bash
 mysql-bash:
 	clear
 	docker-compose exec mysql bash -c 'mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD'
-phpmyadmin-bash:
+mysql-import:
 	clear
-	docker-compose exec phpmyadmin bash
+	docker-compose exec mysql bash -c 'mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE < dump.sql'
 logs:
 	clear
 	docker-compose logs
@@ -48,40 +51,3 @@ logs-watch:
 log-php:
 	clear
 	docker-compose logs php
-log-php-watch:
-
-init:
-	clear
-	docker-compose exec php rm -rfv vendor/ public/storage bootstrap/cache/*.tmp bootstrap/cache/*.php compsoer.lock
-	docker-compose exec php composer install
-	docker-compose exec php php artisan storage:link
-	docker-compose exec php chmod -R 777 storage bootstrap/cache
-migrate:
-	clear
-	docker-compose exec php php artisan migrate
-seed:
-	clear
-	docker-compose exec php php artisan db:seed
-migrate-seed:
-	clear
-	docker-compose exec php php artisan migrate:fresh --seed
-test:
-	clear
-	docker-compose exec php php artisan test
-rollback:
-	clear
-	docker-compose exec php php artisan migrate:fresh
-	docker-compose exec php php artisan migrate:refresh
-tinker:
-	clear
-	docker-compose exec php php artisan tinker
-optimize:
-	clear
-	docker-compose exec php php artisan view:cache
-	docker-compose exec php php artisan event:cache
-	docker-compose exec php php artisan event:clear
-	docker-compose exec php php artisan optimize:clear
-	docker-compose exec php php artisan clear-compiled
-	docker-compose exec php composer clear-cache
-	docker-compose exec php composer dump-autoload -o
-	docker-compose exec php php artisan optimize
